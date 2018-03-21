@@ -59,12 +59,13 @@ class Alias
         }
 
         $this->addClass($this->root);
+        $this->detectMixins();
         $this->detectFake();
         $this->detectNamespace();
         $this->detectClassType();
         $this->detectExtendsNamespace();
 
-        if(!empty($this->namespace)) {
+        if (!empty($this->namespace)) {
             //Create a DocBlock and serializer instance
             $this->phpdoc = new DocBlock(new ReflectionClass($alias), new Context($this->namespace));
         }
@@ -178,6 +179,20 @@ class Alias
         $this->addMagicMethods();
         $this->detectMethods();
         return $this->methods;
+    }
+
+    /**
+     * Detect any @mixin tags
+     */
+    protected function detectMixins()
+    {
+        $tags = (new DocBlock(new \ReflectionClass($this->root)))->getTagsByName('mixin');
+        foreach ($tags as $tag) {
+            $mixin = $tag->getContent();
+            if (class_exists($mixin) || interface_exists($mixin)) {
+                $this->addClass($mixin);
+            }
+        }
     }
 
     /**
